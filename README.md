@@ -35,13 +35,13 @@ sur develop et PR vers main. Elle comporte 3 jobs :
 
 ## Choix techniques
 
-- **Node.js 20 Alpine** : image legere pour le backend
-- **Multi-stage build** : separe les deps de test et
+- **Node.js 20 Alpine** pour l'image legere pour le backend
+- **Multi-stage build** pour separer les deps de test et
   de prod pour une image plus petite et securisee
-- **GHCR** : registry integre a GitHub, gratuit, pas
+- **GHCR** pour le registry integre a GitHub, gratuit, pas
   de rate limiting comme Docker Hub
-- **Reseau bridge dedie** : isole les conteneurs
+- **Reseau bridge dedie** pour isoler les conteneurs
   VitalSync des autres conteneurs sur la machine
-- **Volume persistant** : les donnees PostgreSQL
+- **Volume persistant** pour les donnees PostgreSQL
   survivent au redemarrage des conteneurs
-- **GitHub Actions** : CI/CD integre a GitHub
+- **GitHub Actions** pour le CI/CD integre a GitHub
