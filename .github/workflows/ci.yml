@@ -36,12 +36,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push backend
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/backend:${{ github.sha }} ./backend
-          docker push ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$REPO/backend:${{ github.sha }} ./backend
+          docker push ghcr.io/$REPO/backend:${{ github.sha }}
       - name: Build and push frontend
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/frontend:${{ github.sha }} ./frontend
-          docker push ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$REPO/frontend:${{ github.sha }} ./frontend
+          docker push ghcr.io/$REPO/frontend:${{ github.sha }}
 
   deploy-staging:
     runs-on: ubuntu-latest
