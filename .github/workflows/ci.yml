@@ -1,0 +1,69 @@
+name: VitalSync CI/CD
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: cd backend && npm install
+      - name: Run tests
+        run: cd backend && npm test
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push backend
+        run: |
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$REPO/backend:${{ github.sha }} ./backend
+          docker push ghcr.io/$REPO/backend:${{ github.sha }}
+      - name: Build and push frontend
+        run: |
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$REPO/frontend:${{ github.sha }} ./frontend
+          docker push ghcr.io/$REPO/frontend:${{ github.sha }}
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy with docker compose
+        run: |
+          echo "POSTGRES_HOST=database" > .env
+          echo "POSTGRES_USER=vitalsync" >> .env
+          echo "POSTGRES_PASSWORD=secret123" >> .env
+          echo "POSTGRES_DB=vitalsync_db" >> .env
+          docker compose up -d
+      - name: Wait for backend
+        run: sleep 10
+      - name: Health check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Health check passed"
